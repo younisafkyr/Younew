@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Collection {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  position  Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id           Int         @id @default(autoincrement())
+  name         String
+  slug         String      @unique
+  description  String      @default("")
+  price        Float
+  comparePrice Float?
+  images       String      @default("[]") // JSON array of URLs
+  sizes        String      @default("[]") // JSON array, e.g. ["S","M","L"]
+  colors       String      @default("[]")
+  stock        Int         @default(0)
+  active       Boolean     @default(true)
+  badge        String?     // e.g. "جديد"
+  collectionId Int?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  reference     String      @unique
+  customerName  String
+  phone         String
+  city          String
+  cityId        String?     // Ozon Express city id
+  address       String
+  note          String      @default("")
+  total         Float
+  shippingFee   Float       @default(0)
+  status        String      @default("NEW")
+  source        String      @default("Direct") // Facebook, Instagram, TikTok, Google, WhatsApp, Manuel...
+  ip            String?
+  // Ozon Express
+  trackingNumber String?
+  carrierStatus  String?
+  carrierSyncedAt DateTime?
+  items         OrderItem[]
+  history       OrderHistory[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int?
+  name      String
+  size      String?
+  color     String?
+  quantity  Int
+  price     Float
+}
+
+model OrderHistory {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  message   String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model BlockedPhone {
+  id        Int      @id @default(autoincrement())
+  phone     String   @unique
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+}
